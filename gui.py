@@ -13,17 +13,32 @@ n = n+2
 m=30
 BOARD_POS = (10, 10)
 
-menu = ['H','Px','Py','C']
+menu = ['H','Px','Py','Pz','C']
 
 def create_board_surf():
     board_surf = pygame.Surface((TILESIZE*m, TILESIZE*n))
     dark = False
-    for x in range(m):
+    for x in range(len(menu)):
         rect = pygame.Rect(x*TILESIZE, 0*TILESIZE, TILESIZE, TILESIZE)
         pygame.draw.rect(board_surf, pygame.Color('green'), rect)
         rect = pygame.Rect(x*TILESIZE, 1*TILESIZE, TILESIZE, TILESIZE)
         pygame.draw.rect(board_surf, pygame.Color('beige'), rect)
         pygame.draw.line(board_surf, pygame.Color('darkgrey'), (x*TILESIZE, 0*TILESIZE),(x*TILESIZE, (1)*TILESIZE),2)
+    
+    # for run button 
+    for x in range(len(menu),len(menu)+1):
+        rect = pygame.Rect(x*TILESIZE, 0*TILESIZE, TILESIZE, TILESIZE)
+        pygame.draw.rect(board_surf, pygame.Color('red'), rect)
+        rect = pygame.Rect(x*TILESIZE, 1*TILESIZE, TILESIZE, TILESIZE)
+        pygame.draw.rect(board_surf, pygame.Color('beige'), rect)
+        pygame.draw.line(board_surf, pygame.Color('darkgrey'), (x*TILESIZE, 0*TILESIZE),(x*TILESIZE, (1)*TILESIZE),2)
+        pygame.draw.polygon(board_surf, pygame.Color('green'), [(x*TILESIZE+15,15),(x*TILESIZE+15,TILESIZE-15),((x+1)*TILESIZE-15,TILESIZE//2)])
+
+    for x in range(len(menu)+1,m):
+        rect = pygame.Rect(x*TILESIZE, 0*TILESIZE, TILESIZE, 2*TILESIZE)
+        pygame.draw.rect(board_surf, pygame.Color('beige'), rect)
+        #pygame.draw.line(board_surf, pygame.Color('darkgrey'), (x*TILESIZE, 0*TILESIZE),(x*TILESIZE, (1)*TILESIZE),2)
+
     for y in range(2,n):
         x = 0
         rect = pygame.Rect(x*TILESIZE, y*TILESIZE, TILESIZE, TILESIZE)
@@ -48,9 +63,17 @@ def get_gate_under_mouse(board):
     mouse_pos = pygame.Vector2(pygame.mouse.get_pos()) - BOARD_POS
     x, y = [int(v // TILESIZE) for v in mouse_pos]
     try: 
-        if x >= 0 and y == 0: return (menu[x], x, y)
+        if x >= 0 and y == 0 and x<len(menu): return (menu[x], x, y)
     except IndexError: pass
     return None, None, None
+    
+def get_run_under_mouse(board):
+    mouse_pos = pygame.Vector2(pygame.mouse.get_pos()) - BOARD_POS
+    x, y = [int(v // TILESIZE) for v in mouse_pos]
+    try: 
+        if x == len(menu) and y == 0 : return True
+    except IndexError: pass
+    return False
 
 def get_qubit_under_mouse(board):
     mouse_pos = pygame.Vector2(pygame.mouse.get_pos()) - BOARD_POS
@@ -61,7 +84,6 @@ def get_qubit_under_mouse(board):
     return None, None, None
 
 def create_circuit():
-    #qubits = [0]*(n-2)
     circuit = []
     for y in range(n):
         circuit.append([0])
@@ -75,7 +97,7 @@ def draw_pieces(screen, board, font, selected_gate):
     sx, sy = None, None
     if selected_gate:
         gate, sx, sy = selected_gate
-    
+
     for y in range(2,n):
         # for qubits
         for x in range(0,1):
@@ -129,6 +151,9 @@ def draw_menu(screen, board, font, selected_gate):
         screen.blit(s2, s2.get_rect(center=pos.center).move(1, 1))
         screen.blit(s1, s1.get_rect(center=pos.center))
     
+    
+    
+    
 def draw_selector(screen, piece, x, y):
     if piece != None:
         rect = (BOARD_POS[0] + x * TILESIZE, BOARD_POS[1] + y * TILESIZE, TILESIZE, TILESIZE)
@@ -168,16 +193,20 @@ def main():
         piece, x, y = get_square_under_mouse(board)
         gate, x1, y1 = get_gate_under_mouse(board)
         curr_qubit,xq,yq = get_qubit_under_mouse(board)
+        run = get_run_under_mouse(board)
         events = pygame.event.get()
         for e in events:
             if e.type == pygame.QUIT:
-                print(board)
                 return
             if e.type == pygame.MOUSEBUTTONDOWN:
                 if gate != None:
                     selected_gate = gate, x1, y1
                 if(curr_qubit!=None):
                     board[yq][xq]= 1-board[yq][xq]
+                if(run):
+                    print(board)
+                
+                
             if e.type == pygame.MOUSEBUTTONUP:
                 if drop_pos:
                     gate, old_x, old_y = selected_gate      
@@ -187,8 +216,6 @@ def main():
                         controlled_bit = int(cx_question())
                         board[controlled_bit+2][new_x] = "X"
                         
-                    
-                    
                 selected_piece = None
                 selected_gate = None
                 drop_pos = None
