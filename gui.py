@@ -1,11 +1,19 @@
 import pygame
+import tkinter as tk
+from tkinter.simpledialog import askstring
 
+def cx_question():
+    root = tk.Tk()
+    ans = askstring('cx','On which qubit should we place X?')
+    root.withdraw()
+    return(ans)
 TILESIZE = 80
-n=8
+n = int(input("Enter number of qubits: "))
+n = n+2
 m=30
 BOARD_POS = (10, 10)
 
-menu = ['H','Px','Py','Cx']
+menu = ['H','Px','Py','C']
 
 def create_board_surf():
     board_surf = pygame.Surface((TILESIZE*m, TILESIZE*n))
@@ -17,11 +25,15 @@ def create_board_surf():
         pygame.draw.rect(board_surf, pygame.Color('beige'), rect)
         pygame.draw.line(board_surf, pygame.Color('darkgrey'), (x*TILESIZE, 0*TILESIZE),(x*TILESIZE, (1)*TILESIZE),2)
     for y in range(2,n):
-        for x in range(m):
+        x = 0
+        rect = pygame.Rect(x*TILESIZE, y*TILESIZE, TILESIZE, TILESIZE)
+        pygame.draw.rect(board_surf, pygame.Color('darkgrey' if dark else 'beige'), rect)
+        for x in range(1,m):
             rect = pygame.Rect(x*TILESIZE, y*TILESIZE, TILESIZE, TILESIZE)
             pygame.draw.rect(board_surf, pygame.Color('darkgrey' if dark else 'beige'), rect)
             pygame.draw.line(board_surf, pygame.Color('black'), (x*TILESIZE, (y+0.5)*TILESIZE),((x+1)*TILESIZE, (y+0.5)*TILESIZE),4)
             pygame.draw.line(board_surf, pygame.Color('darkgrey'), ((x+0.5)*TILESIZE, y*TILESIZE),((x+0.5)*TILESIZE, (y+1)*TILESIZE),1)
+        
     return board_surf
 
 def get_square_under_mouse(board):
@@ -40,11 +52,20 @@ def get_gate_under_mouse(board):
     except IndexError: pass
     return None, None, None
 
+def get_qubit_under_mouse(board):
+    mouse_pos = pygame.Vector2(pygame.mouse.get_pos()) - BOARD_POS
+    x, y = [int(v // TILESIZE) for v in mouse_pos]
+    try: 
+        if x == 0 and y >= 2: return (board[y][x], x, y)
+    except IndexError: pass
+    return None, None, None
+
 def create_circuit():
+    #qubits = [0]*(n-2)
     circuit = []
     for y in range(n):
-        circuit.append([])
-        for x in range(m):
+        circuit.append([0])
+        for x in range(1,m):
             circuit[y].append(None)
     return circuit
     
@@ -56,24 +77,41 @@ def draw_pieces(screen, board, font, selected_gate):
         gate, sx, sy = selected_gate
     
     for y in range(2,n):
-        for x in range(m):
+        # for qubits
+        for x in range(0,1):
+            color="black"
+            type = str(board[y][x])
+            selected = x == sx and y == sy
+            s1 = font.render(type, True, pygame.Color('red' if selected else color))
+            s2 = font.render(type, True, pygame.Color('darkgrey'))
+            pos = pygame.Rect(BOARD_POS[0] + x * TILESIZE+1, BOARD_POS[1] + y * TILESIZE + 1, TILESIZE, TILESIZE)
+            screen.blit(s2, s2.get_rect(center=pos.center).move(1, 1))
+            screen.blit(s1, s1.get_rect(center=pos.center))
+
+        # for gates
+        for x in range(1,m):
             gate = board[y][x]
             if gate:
                 selected = x == sx and y == sy
                 type = gate
                 color="black"
-                
                 rect = (BOARD_POS[0] + x * TILESIZE, BOARD_POS[1] + y * TILESIZE, TILESIZE, TILESIZE)
                 pygame.draw.rect(screen, pygame.Color('green'), rect)
                 pygame.draw.rect(screen, (255, 0, 0, 50), rect, 2)
                 s1 = font.render(type, True, pygame.Color('red' if selected else color))
                 s2 = font.render(type, True, pygame.Color('darkgrey'))
-                pos = pygame.Rect(BOARD_POS[0] + x * TILESIZE+1, BOARD_POS[1] + y * TILESIZE + 1, TILESIZE, TILESIZE)
-                
-                
-                
+                pos = pygame.Rect(BOARD_POS[0] + x * TILESIZE+1, BOARD_POS[1] + y * TILESIZE + 1, TILESIZE, TILESIZE)    
                 screen.blit(s2, s2.get_rect(center=pos.center).move(1, 1))
                 screen.blit(s1, s1.get_rect(center=pos.center))
+                
+            if gate=="C":
+                for i in range(y+1,n):
+                    if(board[i][x]=="X"):
+                        break
+                    pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE, i*TILESIZE),((x+0.5)*TILESIZE, (i+1)*TILESIZE),4)
+                    
+                        
+                
                 
 
 def draw_menu(screen, board, font, selected_gate):
@@ -129,19 +167,28 @@ def main():
     while True:
         piece, x, y = get_square_under_mouse(board)
         gate, x1, y1 = get_gate_under_mouse(board)
+        curr_qubit,xq,yq = get_qubit_under_mouse(board)
         events = pygame.event.get()
         for e in events:
             if e.type == pygame.QUIT:
-                #print(board)
+                print(board)
                 return
             if e.type == pygame.MOUSEBUTTONDOWN:
                 if gate != None:
                     selected_gate = gate, x1, y1
+                if(curr_qubit!=None):
+                    board[yq][xq]= 1-board[yq][xq]
             if e.type == pygame.MOUSEBUTTONUP:
                 if drop_pos:
-                    gate, old_x, old_y = selected_gate                    
+                    gate, old_x, old_y = selected_gate      
                     new_x, new_y = drop_pos
                     board[new_y][new_x] = gate
+                    if(gate=="C"):
+                        controlled_bit = int(cx_question())
+                        board[controlled_bit+2][new_x] = "X"
+                        
+                    
+                    
                 selected_piece = None
                 selected_gate = None
                 drop_pos = None
@@ -157,30 +204,5 @@ def main():
         clock.tick(60)
     print(board)
 
-if __name__ == '__main__':
-    
-    main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if __name__ == '__main__':
+if __name__ == '__main__':    
     main()
