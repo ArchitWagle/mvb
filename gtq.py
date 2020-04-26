@@ -13,8 +13,10 @@ PX_MAT = np.mat([[0,1],[1,0]])
 PY_MAT= np.mat([[0,-1j],[1j,0]])
 PZ_MAT = np.mat([[1,0],[0,-1]])
 I_MAT  = np.mat([[1,0],[0,1]])
+T_MAT = np.mat([[1,0],[0,(1+1j)/sqrt(2)]])
+T_MAT_H = T_MAT.getH()
 
-gates = {'H':H_MAT, 'Px':PX_MAT, 'Py':PY_MAT, 'Pz':PZ_MAT}
+gates = {'H':H_MAT, 'Px':PX_MAT, 'Py':PY_MAT, 'Pz':PZ_MAT, 'T_MAT':T_MAT, 'T_MAT_H':T_MAT_H}
 
 def init_control_gate(qu_gate, control_qubit=1, target_qubit=2, num_qubits=2):
     index = 1
@@ -40,8 +42,91 @@ def init_control_gate(qu_gate, control_qubit=1, target_qubit=2, num_qubits=2):
     control_gate = control_mat + target_mat
     return(control_gate)
 
-def circuit_run(board):
+def init_toffoli_gate(qu_gate, control_qubits=[1,2], target_qubit=3, num_qubits=3):
+    index = 1
+    c1,c2 = control_qubits
+    t = target_qubit
+    target_mat = init_control_gate('Px',c1,c2,num_qubits)
+    #t#######################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==c1):
+            transform = np.kron(transform,T_MAT)
+        elif(i==c2):
+            transform = np.kron(transform,T_MAT_H)
+        else:
+            transform = np.kron(transform,I_MAT)   
+
+
+    target_mat = target_mat*transform
+    ############################
+    target_mat =  target_mat*init_control_gate('Px',c1,c2,num_qubits) 
+    ###########################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==t):
+            transform = np.kron(transform,H_MAT)
+        else:
+            transform = np.kron(transform,I_MAT)    
+    target_mat = target_mat*transform
+    ###########################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==t or i==c2):
+            transform = np.kron(transform,T_MAT)
+        else:
+            transform = np.kron(transform,I_MAT)    
+    target_mat = target_mat *transform
     
+    ###########################
+    target_mat =  target_mat*init_control_gate('Px',c1,t,num_qubits) 
+    ###########################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==t):
+            transform = np.kron(transform,T_MAT_H)
+        else:
+            transform = np.kron(transform,I_MAT)
+    target_mat = target_mat*transform
+    ###########################
+    target_mat = target_mat*init_control_gate('Px',c2,t,num_qubits) 
+    
+    ###########################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==t):
+            transform = np.kron(transform,T_MAT)
+        else:
+            transform = np.kron(transform,I_MAT)     
+    target_mat = target_mat  * transform
+    ###########################
+    target_mat =  target_mat*init_control_gate('Px',c1,t,num_qubits)
+
+    ###########################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==t):
+            transform = np.kron(transform,T_MAT_H)
+        else:
+            transform = np.kron(transform,I_MAT)
+    target_mat = target_mat*transform
+    ###########################
+    target_mat = target_mat *init_control_gate('Px',c2,t,num_qubits)    
+    ##########################
+    transform = 1
+    for i in range(1,num_qubits+1):
+        if(i==t):
+            transform = np.kron(transform,H_MAT)
+        else:
+            transform = np.kron(transform,I_MAT)    
+    target_mat = target_mat  *transform
+    #print(target_mat.shape)0
+    return(np.around(target_mat))
+
+#print(init_toffoli_gate('Px', control_qubits=[1,2], target_qubit=3, num_qubits=3))
+
+def circuit_run(board):
+    print(board)
     qubits = np.mat([[1]])
     for i in range(len(board)):
         if(board[i][0]==0):
@@ -62,12 +147,23 @@ def circuit_run(board):
                 target_qubit= row
                 transform = init_control_gate('Px', control_qubit+1, target_qubit+1, len(board))
                 break
-            
+            elif(cell[0]=="T"):
+                control_qubit_1=row
+                row+=1
+                while(board[row][column]!='X'):
+                    if(board[row][column]=='T'):
+                        control_qubit_2=row
+                    row+=1
+                target_qubit= row
+                #print([control_qubit_1+1,control_qubit_2+1,target_qubit])
+                transform = init_toffoli_gate('Px', [control_qubit_1+1,control_qubit_2+1], target_qubit+1, len(board))
+                break
             else:
                 transform = np.kron(transform, gates[cell])
         qubits = transform*qubits
         print("-----------",column)
-        print(transform,qubits)
+        #if(i<10):
+        #    print(transform,qubits)
     print(qubits)
     return(qubits)
 

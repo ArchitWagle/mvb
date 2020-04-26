@@ -15,7 +15,7 @@ m=30
 max_m = 4
 BOARD_POS = (10, 10)
 
-menu = ['H','Px','Py','Pz','C']
+menu = ['H','Px','Py','Pz','C','T']
 
 def create_board_surf():
     board_surf = pygame.Surface((TILESIZE*m, TILESIZE*n))
@@ -138,7 +138,11 @@ def draw_pieces(screen, board, font, selected_gate):
                         break
                     pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE, i*TILESIZE),((x+0.5)*TILESIZE, (i+1)*TILESIZE),4)
                     
-                        
+            if gate=="T":
+                for i in range(y+1,n):
+                    if(board[i][x]=="X"):
+                        break
+                    pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE, i*TILESIZE),((x+0.5)*TILESIZE, (i+1)*TILESIZE),4)                        
                 
                 
 
@@ -221,6 +225,10 @@ def main():
                     if(gate=="C"):
                         controlled_bit = int(cx_question())
                         board[controlled_bit+2][new_x] = "X"
+                    if(gate=="T"):
+                        controlled_bit = [int(x) for x in cx_question().split()]
+                        board[controlled_bit[0]+2][new_x] = "T"
+                        board[controlled_bit[1]+2][new_x] = "X"
                         
                 selected_piece = None
                 selected_gate = None
