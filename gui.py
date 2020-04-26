@@ -1,6 +1,7 @@
 import pygame
 import tkinter as tk
 from tkinter.simpledialog import askstring
+from gtq import *
 
 def cx_question():
     root = tk.Tk()
@@ -11,6 +12,7 @@ TILESIZE = 80
 n = int(input("Enter number of qubits: "))
 n = n+2
 m=30
+max_m = 4
 BOARD_POS = (10, 10)
 
 menu = ['H','Px','Py','Pz','C']
@@ -113,7 +115,11 @@ def draw_pieces(screen, board, font, selected_gate):
         # for gates
         for x in range(1,m):
             gate = board[y][x]
+            global max_m
             if gate:
+                if(x>max_m):
+                    max_m = x
+                
                 selected = x == sx and y == sy
                 type = gate
                 color="black"
@@ -204,9 +210,9 @@ def main():
                 if(curr_qubit!=None):
                     board[yq][xq]= 1-board[yq][xq]
                 if(run):
-                    print(board)
-                
-                
+                    result_vec = circuit_run(board[2:len(board)][0:max_m])                
+                    mlp_plot(result_vec)
+                    print("hi")
             if e.type == pygame.MOUSEBUTTONUP:
                 if drop_pos:
                     gate, old_x, old_y = selected_gate      
