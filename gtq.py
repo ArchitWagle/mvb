@@ -161,7 +161,7 @@ def circuit_run(board):
             else:
                 transform = np.kron(transform, gates[cell])
         qubits = transform*qubits
-        print("-----------",column)
+        #print("-----------",column)
         #if(i<10):
         #    print(transform,qubits)
     print(qubits)

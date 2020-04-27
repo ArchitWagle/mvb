@@ -16,8 +16,10 @@ max_m = 4
 BOARD_POS = (10, 10)
 
 menu = ['H','Px','Py','Pz','C','T']
+gate_colors = {'H':'cadetblue1','Px':'thistle','Py':'thistle','Pz':'thistle','C':'chartreuse','T':'lightpink'}
 
 def create_board_surf():
+    global TILESIZE
     board_surf = pygame.Surface((TILESIZE*m, TILESIZE*n))
     dark = False
     for x in range(len(menu)):
@@ -96,6 +98,7 @@ def create_circuit():
 
 
 def draw_pieces(screen, board, font, selected_gate):
+    global TILESIZE
     sx, sy = None, None
     if selected_gate:
         gate, sx, sy = selected_gate
@@ -116,6 +119,20 @@ def draw_pieces(screen, board, font, selected_gate):
         for x in range(1,m):
             gate = board[y][x]
             global max_m
+            
+            end = 0
+            if gate=="C":
+                for i in range(y+1,n):
+                    if(board[i][x]=="X"):
+                        end = i
+                        break
+                pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE+10, (y+0.5)*TILESIZE),((x+0.5)*TILESIZE+10, (end+0.5)*TILESIZE),3)
+            if gate=="T":
+                for i in range(y+1,n):
+                    if(board[i][x]=="X"):
+                        end = i
+                        break
+                pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE+10, (y+0.5)*TILESIZE),((x+0.5)*TILESIZE+10, (end+0.5)*TILESIZE),3) 
             if gate:
                 if(x>max_m):
                     max_m = x
@@ -123,7 +140,8 @@ def draw_pieces(screen, board, font, selected_gate):
                 selected = x == sx and y == sy
                 type = gate
                 color="black"
-                rect = (BOARD_POS[0] + x * TILESIZE, BOARD_POS[1] + y * TILESIZE, TILESIZE, TILESIZE)
+                offset = 15
+                rect = (BOARD_POS[0] + x * TILESIZE+15, BOARD_POS[1] + y * TILESIZE+15, TILESIZE-2*offset, TILESIZE-2*offset)
                 pygame.draw.rect(screen, pygame.Color('green'), rect)
                 pygame.draw.rect(screen, (255, 0, 0, 50), rect, 2)
                 s1 = font.render(type, True, pygame.Color('red' if selected else color))
@@ -131,12 +149,12 @@ def draw_pieces(screen, board, font, selected_gate):
                 pos = pygame.Rect(BOARD_POS[0] + x * TILESIZE+1, BOARD_POS[1] + y * TILESIZE + 1, TILESIZE, TILESIZE)    
                 screen.blit(s2, s2.get_rect(center=pos.center).move(1, 1))
                 screen.blit(s1, s1.get_rect(center=pos.center))
-                
+            '''    
             if gate=="C":
                 for i in range(y+1,n):
                     if(board[i][x]=="X"):
                         break
-                    pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE, i*TILESIZE),((x+0.5)*TILESIZE, (i+1)*TILESIZE),4)
+                    pygame.draw.line(screen, pygame.Color('red'), (x*TILESIZE+TILESIZE//2+10, i*TILESIZE),(x*TILESIZE+TILESIZE//2+10, (i+1)*TILESIZE+15),3)
                     
             if gate=="T":
                 for i in range(y+1,n):
@@ -144,7 +162,7 @@ def draw_pieces(screen, board, font, selected_gate):
                         break
                     pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE, i*TILESIZE),((x+0.5)*TILESIZE, (i+1)*TILESIZE),4)                        
                 
-                
+            '''
 
 def draw_menu(screen, board, font, selected_gate):
     y=0
@@ -192,7 +210,7 @@ def draw_drag(screen, board, selected_gate, font):
 def main():
     pygame.init()
     font = pygame.font.SysFont('', 32)
-    screen = pygame.display.set_mode((2080, 1040))
+    screen = pygame.display.set_mode((1800, 700))
     board = create_circuit()
     board_surf = create_board_surf()
     clock = pygame.time.Clock()
