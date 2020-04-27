@@ -126,7 +126,10 @@ def init_toffoli_gate(qu_gate, control_qubits=[1,2], target_qubit=3, num_qubits=
 #print(init_toffoli_gate('Px', control_qubits=[1,2], target_qubit=3, num_qubits=3))
 
 def circuit_run(board):
-    print(board)
+    #print(board)
+    history = []
+    for i in range(len(board)):
+        history.append([0]*len(board[0]))
     qubits = np.mat([[1]])
     for i in range(len(board)):
         if(board[i][0]==0):
@@ -161,10 +164,13 @@ def circuit_run(board):
             else:
                 transform = np.kron(transform, gates[cell])
         qubits = transform*qubits
+        for j in range(len(board)):
+            history[j][column] = qubits[j][0,0]
+        
         #print("-----------",column)
         #if(i<10):
         #    print(transform,qubits)
-    print(qubits)
+    print(history)
     return(qubits)
 
 def on_key_press(event):

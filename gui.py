@@ -2,6 +2,7 @@ import pygame
 import tkinter as tk
 from tkinter.simpledialog import askstring
 from gtq import *
+from bloch_plot import *
 
 def cx_question():
     root = tk.Tk()
@@ -15,8 +16,8 @@ m=30
 max_m = 4
 BOARD_POS = (10, 10)
 
-menu = ['H','Px','Py','Pz','C','T']
-gate_colors = {'H':'cadetblue1','Px':'thistle','Py':'thistle','Pz':'thistle','X':'thistle','C':'chartreuse','T':'lightpink'}
+menu = ['H','Px','Py','Pz','C','T','QFT']
+gate_colors = {'H':'cadetblue1','Px':'thistle','Py':'thistle','Pz':'thistle','X':'thistle','C':'lightpink','T':'lightpink','QFT':'chartreuse'}
 
 def create_board_surf():
     global TILESIZE
@@ -196,9 +197,13 @@ def draw_drag(screen, board, selected_gate, font):
 
 def main():
     pygame.init()
+    
     font = pygame.font.SysFont('', 32)
     screen = pygame.display.set_mode((1800, 700))
     board = create_circuit()
+    history = []
+    for i in range(len(board)-2):
+        history.append([0]*len(board[0]))
     board_surf = create_board_surf()
     clock = pygame.time.Clock()
     selected_piece = None
@@ -219,9 +224,13 @@ def main():
                 if(curr_qubit!=None):
                     board[yq][xq]= 1-board[yq][xq]
                 if(run):
-                    result_vec = circuit_run(board[2:len(board)][0:max_m])                
-                    mlp_plot(result_vec)
-                    print("hi")
+                    result_vec= circuit_run(board[2:len(board)][0:max_m])                
+                    mlp_plot(result_vec)     
+                    #run=False               #
+                if(e.button==3):
+                    #if right clicked clear button
+                    board[y][x]=None
+                    
             if e.type == pygame.MOUSEBUTTONUP:
                 if drop_pos:
                     gate, old_x, old_y = selected_gate      
