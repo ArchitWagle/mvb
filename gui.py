@@ -4,9 +4,9 @@ from tkinter.simpledialog import askstring
 from gtq import *
 from bloch_plot import *
 
-def cx_question():
+def cx_question(ques_stri):
     root = tk.Tk()
-    ans = askstring('cx','On which qubit should we place X?')
+    ans = askstring('cx',ques_stri)
     root.withdraw()
     return(ans)
 TILESIZE = 80
@@ -134,7 +134,24 @@ def draw_pieces(screen, board, font, selected_gate):
                         end = i
                         break
                 pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE+10, (y+0.5)*TILESIZE),((x+0.5)*TILESIZE+10, (end+0.5)*TILESIZE),3) 
-            if gate:
+
+            if(gate and gate[0:3]=="QFT"):
+                if(len(gate)>3):
+                    selected = x == sx and y == sy
+                    type = gate
+                    color="black"
+                    offset = 15
+                    rect = (BOARD_POS[0] + x * TILESIZE+15, BOARD_POS[1] + y * TILESIZE+15, TILESIZE-2*offset, (int(gate[3::]))*TILESIZE-2*offset)
+                    pygame.draw.rect(screen, pygame.Color(gate_colors[gate[0:3]]), rect)
+                    pygame.draw.rect(screen, (255, 0, 0, 50), rect, 2)
+                    s1 = font.render(type, True, pygame.Color('red' if selected else color))
+                    s2 = font.render(type, True, pygame.Color('darkgrey'))
+                    pos = pygame.Rect(BOARD_POS[0] + x * TILESIZE+1, BOARD_POS[1] + y * TILESIZE + 1, TILESIZE, TILESIZE*(int(gate[3::])))    
+                    screen.blit(s2, s2.get_rect(center=pos.center).move(1, 1))
+                    screen.blit(s1, s1.get_rect(center=pos.center))
+                    
+                
+            elif gate:
                 if(x>max_m):
                     max_m = x
                 
@@ -152,6 +169,7 @@ def draw_pieces(screen, board, font, selected_gate):
                 screen.blit(s1, s1.get_rect(center=pos.center))
 
 
+                    
 def draw_menu(screen, board, font, selected_gate):
     y=0
     sx, sy = None, None
@@ -225,10 +243,9 @@ def main():
                     board[yq][xq]= 1-board[yq][xq]
                 if(run):
                     result_vec= circuit_run(board[2:len(board)][0:max_m])                
-                    mlp_plot(result_vec)     
+                    mlp_plot(n-2,result_vec)     
                     #run=False               #
-                if(e.button==3):
-                    #if right clicked clear button
+                if(e.button==3):                    
                     board[y][x]=None
                     
             if e.type == pygame.MOUSEBUTTONUP:
@@ -237,12 +254,18 @@ def main():
                     new_x, new_y = drop_pos
                     board[new_y][new_x] = gate
                     if(gate=="C"):
-                        controlled_bit = int(cx_question())
+                        controlled_bit = int(cx_question('On which qubit should we place target?'))
                         board[controlled_bit+2][new_x] = "X"
                     if(gate=="T"):
-                        controlled_bit = [int(x) for x in cx_question().split()]
+                        controlled_bit = [int(x) for x in cx_question('On which qubit should we place second control and target?').split()]
                         board[controlled_bit[0]+2][new_x] = "T"
                         board[controlled_bit[1]+2][new_x] = "X"
+                    if(gate=="QFT"):
+                        num_fourier_bits = int(cx_question('How many inputs for fourier transform?'))
+                        board[new_y][new_x] = "QFT"+str(num_fourier_bits)
+                        print(board)
+                        
+                        
                         
                 selected_piece = None
                 selected_gate = None

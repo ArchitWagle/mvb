@@ -24,20 +24,14 @@ def init_control_gate(qu_gate, control_qubit=1, target_qubit=2, num_qubits=2):
     target_mat = 1
     while index <= num_qubits:
         if index == control_qubit:
-            #print("1")
             control_mat = np.kron(control_mat, np.mat([[1,0],[0,0]]))
             target_mat = np.kron(target_mat,np.mat([[0,0],[0,1]]))
         elif index == target_qubit:
-            #print("2")
             control_mat = np.kron(control_mat, np.eye(2))
             target_mat = np.kron(target_mat, gates[qu_gate])
         else:
-            #print("3")
             control_mat = np.kron(control_mat, np.eye(2))
             target_mat = np.kron(target_mat, np.eye(2))
-        #print(control_mat)
-        #print(target_mat)
-
         index += 1    
     control_gate = control_mat + target_mat
     return(control_gate)
@@ -120,7 +114,6 @@ def init_toffoli_gate(qu_gate, control_qubits=[1,2], target_qubit=3, num_qubits=
         else:
             transform = np.kron(transform,I_MAT)    
     target_mat = target_mat  *transform
-    #print(target_mat.shape)0
     return(np.around(target_mat))
 
 #print(init_toffoli_gate('Px', control_qubits=[1,2], target_qubit=3, num_qubits=3))
@@ -141,13 +134,14 @@ def circuit_run(board):
         transform = np.mat([[1]])
         for row in range(len(board)):
             cell = board[row][column]
-            if(cell==None):
+            if(cell==None or cell=="X"):
                 transform = np.kron(transform,I_MAT)
             elif(cell[0]=="C"):
                 control_qubit=row
-                while(board[row][column]!='X'):
-                     row+=1
-                target_qubit= row
+                row1 = 0
+                while(board[row1][column]!='X'):
+                     row1+=1
+                target_qubit= row1
                 transform = init_control_gate('Px', control_qubit+1, target_qubit+1, len(board))
                 break
             elif(cell[0]=="T"):
@@ -158,7 +152,6 @@ def circuit_run(board):
                         control_qubit_2=row
                     row+=1
                 target_qubit= row
-                #print([control_qubit_1+1,control_qubit_2+1,target_qubit])
                 transform = init_toffoli_gate('Px', [control_qubit_1+1,control_qubit_2+1], target_qubit+1, len(board))
                 break
             else:
@@ -167,10 +160,7 @@ def circuit_run(board):
         for j in range(len(board)):
             history[j][column] = qubits[j][0,0]
         
-        #print("-----------",column)
-        #if(i<10):
-        #    print(transform,qubits)
-    print(history)
+    #print(history)
     return(qubits)
 
 def on_key_press(event):
@@ -184,14 +174,23 @@ def _quit():
     root.destroy()  # this is necessary on Windows to prevent
     #print("quittingggg")
     
-def mlp_plot(result_vec):
+def mlp_plot(n,result_vec):
+    format(10, '016b')
     global root
     print(result_vec)
+    N = len(result_vec)
+    temp = result_vec
+    ind = [i for i in range(len(result_vec))]
+    bin_i = [int(format(i, '016b')[-n:][::-1],2) for i in ind]
+    print(bin_i,[format(i, '016b')[-n:][::-1] for i in ind])
+    result_vec = [temp[i] for i in bin_i ]
+    
+    
     result_vec = [abs(x[0,0])**2 for x in result_vec]
     print(result_vec)
     N = len(result_vec)
     #ind = np.arange(len(result_vec))
-    ind = [i for i in range(len(result_vec))]
+    
     #print(result_vec,N,ind)
     width = 0.35
     
@@ -200,8 +199,9 @@ def mlp_plot(result_vec):
             
     fig = Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
-    rects1 = ax.bar(ind, result_vec, width)
-    ax.set_xticks(ind)
+    labels_bin = ['|'+format(i,'016b')[-n:]+'' for i in ind]
+    rects1 = ax.bar([format(i,'016b')[-n:] for i in ind], result_vec, width)
+    #ax.set_xticks(ind,[format(i,'016b')[-n:] for i in ind])
 
     canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
     canvas.draw()
