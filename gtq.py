@@ -182,10 +182,11 @@ def circuit_run(board):
                 target_qubit= row1
                 transform = init_control_gate('Px', control_qubit+1, target_qubit+1, len(board))
                 break
-                
+            elif(cell[0]=="Q" and cell[3]=="i"):
+                transform = np.linalg.inv(init_qft_gate(row, int(cell[4::]), len(board)))
+                break
             elif(cell[0]=="Q"):    
                 transform = init_qft_gate(row, int(cell[3::]), len(board))
-                
                 break
             elif(cell[0]=="T"):
                 control_qubit_1=row

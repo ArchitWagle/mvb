@@ -17,8 +17,8 @@ m=30
 max_m = 400
 BOARD_POS = (10, 10)
 
-menu = ['H','Px','Py','Pz','C','T','QFT']
-gate_colors = {'H':'cadetblue1','Px':'thistle','Py':'thistle','Pz':'thistle','X':'thistle','C':'lightpink','T':'lightpink','QFT':'chartreuse'}
+menu = ['H','Px','Py','Pz','C','T','QFT','QFTi']
+gate_colors = {'H':'cadetblue1','Px':'thistle','Py':'thistle','Pz':'thistle','X':'thistle','C':'lightpink','T':'lightpink','QFT':'chartreuse','QFTi':'chartreuse'}
 
 def create_board_surf():
     global TILESIZE
@@ -136,7 +136,23 @@ def draw_pieces(screen, board, font, selected_gate):
                         break
                 pygame.draw.line(screen, pygame.Color('red'), ((x+0.5)*TILESIZE+10, (y+0.5)*TILESIZE),((x+0.5)*TILESIZE+10, (end+0.5)*TILESIZE),3) 
 
-            if(gate and gate[0:3]=="QFT"):
+
+            if(gate and gate[0:4]=="QFTi"):
+                if(len(gate)>3):
+                    selected = x == sx and y == sy
+                    type = gate
+                    color="black"
+                    offset = 15
+                    rect = (BOARD_POS[0] + x * TILESIZE+15, BOARD_POS[1] + y * TILESIZE+15, TILESIZE-2*offset, (int(gate[4::]))*TILESIZE-2*offset)
+                    pygame.draw.rect(screen, pygame.Color(gate_colors[gate[0:3]]), rect)
+                    pygame.draw.rect(screen, (255, 0, 0, 50), rect, 2)
+                    s1 = font.render(type, True, pygame.Color('red' if selected else color))
+                    s2 = font.render(type, True, pygame.Color('darkgrey'))
+                    pos = pygame.Rect(BOARD_POS[0] + x * TILESIZE+1, BOARD_POS[1] + y * TILESIZE + 1, TILESIZE, TILESIZE*(int(gate[4::])))    
+                    screen.blit(s2, s2.get_rect(center=pos.center).move(1, 1))
+                    screen.blit(s1, s1.get_rect(center=pos.center))
+
+            elif(gate and gate[0:3]=="QFT"):
                 if(len(gate)>3):
                     selected = x == sx and y == sy
                     type = gate
@@ -267,8 +283,10 @@ def main():
                         num_fourier_bits = int(cx_question('How many inputs for fourier transform?'))
                         board[new_y][new_x] = "QFT"+str(num_fourier_bits)
                         print(board)
-                        
-                        
+                    if(gate=="QFTi"):
+                        num_fourier_bits = int(cx_question('How many inputs for inverse fourier transform?'))
+                        board[new_y][new_x] = "QFTi"+str(num_fourier_bits)
+                        print(board)                        
                         
                 selected_piece = None
                 selected_gate = None
