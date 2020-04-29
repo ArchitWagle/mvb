@@ -5,7 +5,7 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
-from math import sqrt
+from math import sqrt, pi, cos, sin
 import cmath 
 
 H_MAT = np.mat([[1/sqrt(2),1/sqrt(2)],[1/sqrt(2),-1/sqrt(2)]])
@@ -118,9 +118,45 @@ def init_toffoli_gate(qu_gate, control_qubits=[1,2], target_qubit=3, num_qubits=
 
 #print(init_toffoli_gate('Px', control_qubits=[1,2], target_qubit=3, num_qubits=3))
 
+
+    
+def print_TableForm(A):
+    with np.printoptions(precision=4, suppress=True, formatter={'float': '{:0.4f}'.format}, linewidth=100):
+        print(A)
+    
+
+def init_qft_gate(start, number, n):
+    x = number
+    number = 2**number
+    w = complex(cos(2*pi/number), sin(2*pi/number))
+    
+    QFT_mat = [[1]*number for i in range(number)]
+    for i in range(1,number):
+        QFT_mat[i][1] = w**i
+        for j in range(2,number):
+            QFT_mat[i][j] = QFT_mat[i][j-1] * QFT_mat[i][1]
+    #QFT_mat= np.around(QFT_mat)
+    QFT_mat = np.mat(QFT_mat)
+    #print_TableForm(QFT_mat)
+    QFT_mat/=sqrt(number)
+    ans = 1
+    j = 0
+    for i in range(start):
+        ans = np.kron(ans,I_MAT)
+        
+    ans = np.kron(ans,QFT_mat)
+        
+    for i in range(start+x, n):
+        ans = np.kron(ans,I_MAT)
+    
+    return np.mat(ans)
+#print(init_qft_gate(0,3,3))
+
+
 def circuit_run(board):
     #print(board)
     history = []
+    print("board size", len(board))
     for i in range(len(board)):
         history.append([0]*len(board[0]))
     qubits = np.mat([[1]])
@@ -129,7 +165,9 @@ def circuit_run(board):
             qubits = np.kron(qubits,np.mat([[1],[0]]))
         else:
             qubits = np.kron(qubits,np.mat([[0],[1]]))
-    
+    print("qubit size", len(qubits),len(board))
+    transform=1
+    transform_hist = np.eye(2**len(board))
     for column in range(1,len(board[0])):
         transform = np.mat([[1]])
         for row in range(len(board)):
@@ -144,6 +182,11 @@ def circuit_run(board):
                 target_qubit= row1
                 transform = init_control_gate('Px', control_qubit+1, target_qubit+1, len(board))
                 break
+                
+            elif(cell[0]=="Q"):    
+                transform = init_qft_gate(row, int(cell[3::]), len(board))
+                
+                break
             elif(cell[0]=="T"):
                 control_qubit_1=row
                 row+=1
@@ -157,9 +200,11 @@ def circuit_run(board):
             else:
                 transform = np.kron(transform, gates[cell])
         qubits = transform*qubits
+        transform_hist = transform*transform_hist
         for j in range(len(board)):
             history[j][column] = qubits[j][0,0]
-        
+        print("qubit size", len(qubits))
+    print_TableForm(transform_hist)
     #print(history)
     return(qubits)
 
@@ -176,18 +221,22 @@ def _quit():
     
 def mlp_plot(n,result_vec):
     format(10, '016b')
+    print("final length", len(result_vec))
     global root
     print(result_vec)
     N = len(result_vec)
     temp = result_vec
+    print("final length", len(result_vec))
     ind = [i for i in range(len(result_vec))]
     bin_i = [int(format(i, '016b')[-n:][::-1],2) for i in ind]
     print(bin_i,[format(i, '016b')[-n:][::-1] for i in ind])
-    result_vec = [temp[i] for i in bin_i ]
+    print("final length", len(temp))
+    #result_vec = [temp[i] for i in bin_i ]
     
     
     result_vec = [abs(x[0,0])**2 for x in result_vec]
-    print(result_vec)
+    print("final length", len(result_vec))
+    #print(result_vec)
     N = len(result_vec)
     #ind = np.arange(len(result_vec))
     
@@ -199,7 +248,8 @@ def mlp_plot(n,result_vec):
             
     fig = Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
-    labels_bin = ['|'+format(i,'016b')[-n:]+'' for i in ind]
+    print("final length", len(result_vec))
+    labels_bin = ['|'+format(i,'016b')[-n:]+'>' for i in ind]
     rects1 = ax.bar([format(i,'016b')[-n:] for i in ind], result_vec, width)
     #ax.set_xticks(ind,[format(i,'016b')[-n:] for i in ind])
 

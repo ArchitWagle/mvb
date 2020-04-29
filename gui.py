@@ -12,8 +12,9 @@ def cx_question(ques_stri):
 TILESIZE = 80
 n = int(input("Enter number of qubits: "))
 n = n+2
+#print("returned length",len(board[2:len(board)][0:max_m]))
 m=30
-max_m = 4
+max_m = 400
 BOARD_POS = (10, 10)
 
 menu = ['H','Px','Py','Pz','C','T','QFT']
@@ -152,8 +153,7 @@ def draw_pieces(screen, board, font, selected_gate):
                     
                 
             elif gate:
-                if(x>max_m):
-                    max_m = x
+
                 
                 selected = x == sx and y == sy
                 type = gate
@@ -220,6 +220,7 @@ def main():
     screen = pygame.display.set_mode((1800, 700))
     board = create_circuit()
     history = []
+    print("returned length",len(board[2:len(board)][0:max_m]),n)
     for i in range(len(board)-2):
         history.append([0]*len(board[0]))
     board_surf = create_board_surf()
@@ -242,7 +243,9 @@ def main():
                 if(curr_qubit!=None):
                     board[yq][xq]= 1-board[yq][xq]
                 if(run):
-                    result_vec= circuit_run(board[2:len(board)][0:max_m])                
+                    print("returned length",len(board[2:len(board)][0:max_m]))
+                    result_vec= circuit_run(board[2:len(board)][0:max_m])     
+                    print("returned length", len(result_vec),len(board)-2)           
                     mlp_plot(n-2,result_vec)     
                     #run=False               #
                 if(e.button==3):                    
