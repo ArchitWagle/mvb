@@ -56,9 +56,9 @@ Enter number of qubits: 4
 Now you can drag and drop the gates and toggle each qubit by clicking it.
 To run the program click the rightmost run button.
 
-![The interface](/images/sample_circuit.png)
+![The interface](/images/samaple_circuit.png)
 
-![result of the execution of a circuit](/images/results.png)
+![result of the execution of a circuit](/images/result.png)
 
 ## Authors
 
